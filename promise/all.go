@@ -19,7 +19,10 @@ func All(opts PromiseAllOpts) *Promise {
 }
 
 func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurrency int) {
-	workC := make(chan struct{}, maxConcurrency)
+	var workC chan struct{}
+	if maxConcurrency > 0 {
+		workC = make(chan struct{}, maxConcurrency)
+	}
 
 	var res interface{}
 	if waitAllSettled {
@@ -31,7 +34,9 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 	remaining := len(childPromises)
 
 	updateProgress := func(i int, v interface{}) {
-		workC <- struct{}{}
+		if workC != nil {
+			workC <- struct{}{}
+		}
 
 		if p.IsSettled {
 			return
@@ -47,14 +52,19 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 		}
 
 		if remaining--; remaining == 0 {
-			close(workC)
+			if workC != nil {
+				close(workC)
+			}
+
 			p.settle(res, nil)
 		}
 	}
 
 	for index, cp := range childPromises {
 		go func(i int, promise *Promise) {
-			<-workC
+			if workC != nil {
+				<-workC
+			}
 
 			res, err := promise.Await()
 
@@ -69,7 +79,7 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 			}
 		}(index, cp)
 
-		if index < maxConcurrency {
+		if workC != nil && index < maxConcurrency {
 			workC <- struct{}{}
 		}
 	}
