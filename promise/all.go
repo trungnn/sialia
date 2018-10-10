@@ -3,67 +3,75 @@ package promise
 type ResList []interface{}
 type PromiseList []*Promise
 
-func All(promises ...*Promise) *Promise {
-	allP := &Promise{
-		doneC: make(chan struct{}),
+type PromiseAllOpts struct {
+	MaxConcurrency int
+	WaitAllSettled bool
+	Promises []*Promise
+}
+
+func All(opts PromiseAllOpts) *Promise {
+	allP := newPromise()
+	allP.AutoStart = true
+
+	allP.all(opts.Promises, opts.WaitAllSettled, opts.MaxConcurrency)
+
+	return allP
+}
+
+func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurrency int) {
+	workC := make(chan struct{}, maxConcurrency)
+
+	var res interface{}
+	if waitAllSettled {
+		res = make(PromiseList, len(childPromises))
+	} else {
+		res = make(ResList, len(childPromises))
 	}
 
-	res := make(ResList, len(promises))
-	remaining := len(promises)
+	remaining := len(childPromises)
 
 	updateProgress := func(i int, v interface{}) {
-		if allP.IsSettled {
+		workC <- struct{}{}
+
+		if p.IsSettled {
 			return
 		}
 
-		res[i] = v
+		switch val := v.(type) {
+		case *Promise:
+			pList := res.(PromiseList)
+			pList[i] = val
+		default:
+			rList := res.(ResList)
+			rList[i] = val
+		}
 
 		if remaining--; remaining == 0 {
-			allP.settle(res, nil)
+			close(workC)
+			p.settle(res, nil)
 		}
 	}
 
-	for index, promise := range promises {
-		go func(i int, p *Promise) {
-			res, err := p.Await()
+	for index, cp := range childPromises {
+		go func(i int, promise *Promise) {
+			<-workC
 
-			if err != nil {
-				allP.settle(nil, err)
+			res, err := promise.Await()
+
+			if waitAllSettled {
+				updateProgress(i, promise)
 			} else {
-				updateProgress(i, res)
+				if err != nil {
+					p.settle(nil, err)
+				} else {
+					updateProgress(i, res)
+				}
 			}
-		}(index, promise)
-	}
+		}(index, cp)
 
-	return allP
-}
-
-func AllSettled(promises ...*Promise) *Promise {
-	allP := &Promise {
-		doneC: make(chan struct{}),
-	}
-
-	res := make(PromiseList, len(promises))
-	remaining := len(promises)
-
-	updateProgress := func(i int, p *Promise) {
-		if allP.IsSettled {
-			return
-		}
-
-		res[i] = p
-
-		if remaining--; remaining == 0 {
-			allP.settle(res, nil)
+		if index < maxConcurrency {
+			workC <- struct{}{}
 		}
 	}
-
-	for index, promise := range promises {
-		go func(i int, p *Promise) {
-			p.Await()
-			updateProgress(i, p)
-		}(index, promise)
-	}
-
-	return allP
 }
+

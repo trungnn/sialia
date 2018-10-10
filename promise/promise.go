@@ -2,18 +2,32 @@ package promise
 
 type Promise struct {
 	doneC chan struct{}
+	startC chan struct{}
+	workC chan struct{}
 
+	AutoStart bool
 	IsSettled bool
-	Res interface{}
-	Err error
+	Res       interface{}
+	Err       error
+}
+
+func newPromise() *Promise {
+	return &Promise{
+		doneC: make(chan struct{}),
+		startC: make(chan struct{}),
+	}
 }
 
 func New(fn func()(interface{}, error)) *Promise {
-	p := &Promise{
-		doneC: make(chan struct{}),
-	}
+	p := newPromise()
 
-	go func() { p.settle(fn()) }()
+	go func() {
+		if !p.AutoStart {
+			<-p.startC
+		}
+
+		p.settle(fn())
+	}()
 
 	return p
 }
@@ -22,6 +36,9 @@ func (p *Promise) settle(res interface{}, err error) {
 	p.Res, p.Err = res, err
 	p.IsSettled = true
 	p.doneC <- struct{}{}
+
+	close(p.doneC)
+	close(p.startC)
 }
 
 func (p *Promise) Then(fn func(interface{})(interface{}, error)) *Promise {
@@ -37,6 +54,11 @@ func (p *Promise) Then(fn func(interface{})(interface{}, error)) *Promise {
 }
 
 func (p *Promise) Await() (interface{}, error) {
+	if !p.AutoStart {
+		p.startC <- struct{}{}
+	}
+
 	<- p.doneC
+
 	return p.Res, p.Err
 }
