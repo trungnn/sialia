@@ -33,6 +33,10 @@ func New(fn func()(interface{}, error)) *Promise {
 }
 
 func (p *Promise) settle(res interface{}, err error) {
+	if p.IsSettled {
+		return // redundant
+	}
+
 	p.Res, p.Err = res, err
 	p.IsSettled = true
 	p.doneC <- struct{}{}
