@@ -57,3 +57,33 @@ p2 := promise.New(func()(interface{}, error) {
 // the following line will block until the promise is fulfilled
 res, err := p2.Await() // => nil, error
 ```
+
+Waiting for more than one promise to complete
+
+```golang
+p1 := promise.New(func()(interface{}, error) {   
+    return Add(1, 1)
+})
+p2 := promise.New(func()(interface{}, error) {   
+    return Add(2, 2)
+})
+p3 := promise.New(func()(interface{}, error) {   
+    return Add(3, 3)
+})
+
+p := promise.All(p1, p2, p3)
+// the following line will block until p1, p2, p3 are fulfilled
+res, err := p.Await() // => [2, 4, 6], nil
+
+
+p1 := promise.New(func()(interface{}, error) {   
+    return Add(1000, 1000)
+})
+p2 := promise.New(func()(interface{}, error) {   
+    return Add(1, 2)
+})
+
+p := promise.All(p1, p2)
+// the following line will block until p2 failed
+res, err := p.Await() // => nil, error
+```
