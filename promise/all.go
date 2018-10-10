@@ -1,11 +1,14 @@
 package promise
 
+type ResList []interface{}
+type PromiseList []*Promise
+
 func All(promises ...*Promise) *Promise {
 	allP := &Promise{
 		doneC: make(chan struct{}),
 	}
 
-	res := make([]interface{}, len(promises))
+	res := make(ResList, len(promises))
 	remaining := len(promises)
 
 	updateProgress := func(i int, v interface{}) {
@@ -40,7 +43,7 @@ func AllSettled(promises ...*Promise) *Promise {
 		doneC: make(chan struct{}),
 	}
 
-	res := make([]interface{}, len(promises))
+	res := make(PromiseList, len(promises))
 	remaining := len(promises)
 
 	updateProgress := func(i int, p *Promise) {
