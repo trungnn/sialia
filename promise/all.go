@@ -10,12 +10,17 @@ type PromiseAllOpts struct {
 }
 
 func All(opts PromiseAllOpts) *Promise {
-	allP := newPromise()
-	allP.AutoStart = true
+	if len(opts.Promises) > 0 {
+		allP := newPromise()
+		allP.AutoStart = true
+		allP.all(opts.Promises, opts.WaitAllSettled, opts.MaxConcurrency)
 
-	allP.all(opts.Promises, opts.WaitAllSettled, opts.MaxConcurrency)
-
-	return allP
+		return allP
+	} else {
+		return New(func() (interface{}, error) {
+			return nil, nil
+		})
+	}
 }
 
 func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurrency int) {

@@ -3,7 +3,6 @@ package promise
 type Promise struct {
 	doneC chan struct{}
 	startC chan struct{}
-	workC chan struct{}
 
 	AutoStart bool
 	IsSettled bool
