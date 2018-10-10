@@ -71,8 +71,11 @@ p3 := promise.New(func()(interface{}, error) {
     return Add(3, 3)
 })
 
-p := promise.All(p1, p2, p3)
-// the following line will block until p1, p2, p3 are fulfilled
+p := promise.All(promise.PromiseAllOpts{
+    Promises: []*promise.Promise{p1, p2, p3},
+})
+
+// the following line will block until p1, p2, p3 are settled
 res, err := p.Await() // => [2, 4, 6], nil
 
 
@@ -82,8 +85,75 @@ p1 := promise.New(func()(interface{}, error) {
 p2 := promise.New(func()(interface{}, error) {   
     return Add(1, 2)
 })
+p3 := promise.New(func()(interface{}, error) {   
+    return Add(3, 3)
+})
 
-p := promise.All(p1, p2)
+p := promise.All(promise.PromiseAllOpts{
+    Promises: []*promise.Promise{p1, p2, p3},
+})
 // the following line will block until p2 failed
 res, err := p.Await() // => nil, error
+
+
+p1 := promise.New(func()(interface{}, error) {   
+    return Add(1, 1)
+})
+p2 := promise.New(func()(interface{}, error) {   
+    return Add(2, 2)
+})
+p3 := promise.New(func()(interface{}, error) {   
+    return Add(3, 3)
+})
+
+p := promise.All(promise.PromiseAllOpts{
+    Promises: []*promise.Promise{p1, p2, p3},
+    WaitAllSettled: true,
+})
+// the following line will block until p1, p2, p3 are settled
+res, err := p.Await() // => [&p1, &p2, &p3], nil
+```
+
+Promise.All with concurrency control
+
+```golang
+p1 := promise.New(func()(interface{}, error) {   
+    return Add(1000, 1000)
+})
+p2 := promise.New(func()(interface{}, error) {   
+    return Add(1, 2)
+})
+p3 := promise.New(func()(interface{}, error) {   
+    return Add(3, 3)
+})
+
+p := promise.All(promise.PromiseAllOpts{
+    Promises: []*promise.Promise{p1, p2, p3},
+    MaxConcurrency: 1, // only 1 promise will run concurrently at once
+})
+// the following line will block until p2 failed
+res, err := p.Await() // => nil, error
+
+
+p1 := promise.New(func()(interface{}, error) {   
+    return Add(1, 1)
+})
+p2 := promise.New(func()(interface{}, error) {   
+    return Add(2, 2)
+})
+p3 := promise.New(func()(interface{}, error) {   
+    return Add(3, 3)
+})
+
+p := promise.All(promise.PromiseAllOpts{
+    Promises: []*promise.Promise{p1, p2, p3},
+    WaitAllSettled: true,
+    MaxConcurrency: 2, // only 2 promises will run concurrently at once
+})
+// the following line will block until p1, p2, p3 are fulfilled
+res, err := p.Await()
+
+p := promise.All(p1, p2, p3)
+// the following line will block until p1, p2, p3 are fulfilled
+res, err := p.Await() // => [&p1, &p2, &p3], nil
 ```
