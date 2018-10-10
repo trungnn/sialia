@@ -157,3 +157,23 @@ p := promise.All(p1, p2, p3)
 // the following line will block until p1, p2, p3 are fulfilled
 res, err := p.Await() // => [&p1, &p2, &p3], nil
 ```
+
+Promise.Map
+
+```golang
+items := []interface{}{2, 4, 6, 8}
+
+p := promise.Map(promise.PromiseMapOpts{
+    Items: items,
+    MapFn: func(i interface{}) *promise.Promise {
+        return promise.New(func() (interface{}, error) {
+            return Add(0, i.(int))
+        })
+    },
+    WaitAllSettled: true, // (optional)
+    MaxConcurrency: 2, // (optional)
+})
+
+// p will block until all promises are settled
+res, err := p.Await() // 
+```
