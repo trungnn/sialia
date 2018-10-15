@@ -6,7 +6,7 @@ type PromiseList []*Promise
 type PromiseAllOpts struct {
 	MaxConcurrency int
 	WaitAllSettled bool
-	Promises []*Promise
+	Promises       []*Promise
 }
 
 func All(opts PromiseAllOpts) *Promise {
@@ -18,7 +18,14 @@ func All(opts PromiseAllOpts) *Promise {
 		return allP
 	} else {
 		return New(func() (interface{}, error) {
-			return nil, nil
+			var res interface{}
+			if opts.WaitAllSettled {
+				res = make(PromiseList, 0)
+			} else {
+				res = make(ResList, 0)
+			}
+
+			return res, nil
 		})
 	}
 }
@@ -89,4 +96,3 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 		}
 	}
 }
-
