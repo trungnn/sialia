@@ -1,7 +1,7 @@
 package promise
 
 type Promise struct {
-	doneC chan struct{}
+	doneC  chan struct{}
 	startC chan struct{}
 
 	AutoStart bool
@@ -12,12 +12,12 @@ type Promise struct {
 
 func newPromise() *Promise {
 	return &Promise{
-		doneC: make(chan struct{}),
+		doneC:  make(chan struct{}),
 		startC: make(chan struct{}),
 	}
 }
 
-func New(fn func()(interface{}, error)) *Promise {
+func New(fn func() (interface{}, error)) *Promise {
 	p := newPromise()
 
 	go func() {
@@ -44,8 +44,8 @@ func (p *Promise) settle(res interface{}, err error) {
 	close(p.startC)
 }
 
-func (p *Promise) Then(fn func(interface{})(interface{}, error)) *Promise {
-	return New(func()(interface{}, error) {
+func (p *Promise) Then(fn func(interface{}) (interface{}, error)) *Promise {
+	return New(func() (interface{}, error) {
 		res, err := p.Await()
 
 		if err != nil {
@@ -56,12 +56,24 @@ func (p *Promise) Then(fn func(interface{})(interface{}, error)) *Promise {
 	})
 }
 
+func (p *Promise) Catch(fn func(error) (interface{}, error)) *Promise {
+	return New(func() (interface{}, error) {
+		res, err := p.Await()
+
+		if err != nil {
+			return fn(err)
+		}
+
+		return res, err
+	})
+}
+
 func (p *Promise) Await() (interface{}, error) {
 	if !p.AutoStart {
 		p.startC <- struct{}{}
 	}
 
-	<- p.doneC
+	<-p.doneC
 
 	return p.Res, p.Err
 }
