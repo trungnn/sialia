@@ -1,5 +1,9 @@
 package promise
 
+type PromisifiableFn func () (interface{}, error)
+type PromiseThenFn func (interface{}) (interface{}, error)
+type PromiseCatchFn func (error) (interface{}, error)
+
 type Promise struct {
 	doneC  chan struct{}
 	startC chan struct{}
@@ -17,7 +21,7 @@ func newPromise() *Promise {
 	}
 }
 
-func New(fn func() (interface{}, error)) *Promise {
+func New(fn PromisifiableFn) *Promise {
 	p := newPromise()
 
 	go func() {
@@ -44,7 +48,7 @@ func (p *Promise) settle(res interface{}, err error) {
 	close(p.startC)
 }
 
-func (p *Promise) Then(fn func(interface{}) (interface{}, error)) *Promise {
+func (p *Promise) Then(fn PromiseThenFn) *Promise {
 	return New(func() (interface{}, error) {
 		res, err := p.Await()
 
@@ -56,7 +60,7 @@ func (p *Promise) Then(fn func(interface{}) (interface{}, error)) *Promise {
 	})
 }
 
-func (p *Promise) Catch(fn func(error) (interface{}, error)) *Promise {
+func (p *Promise) Catch(fn PromiseCatchFn) *Promise {
 	return New(func() (interface{}, error) {
 		res, err := p.Await()
 
