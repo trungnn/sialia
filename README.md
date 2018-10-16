@@ -187,7 +187,7 @@ res, err := promise.NewWithRetry(func() (interface{}, error) {
     return Add(i, 0)
 }, &promise.RetryOpts{
     MaxTries: 10,
-}).Await() // => nil, *promise.AbortErr
+}).Await() // => nil, error
 
 j := 0
 res, err := promise.NewWithRetry(func() (interface{}, error) {
@@ -198,5 +198,5 @@ res, err := promise.NewWithRetry(func() (interface{}, error) {
     RetryCheck: func(err error) bool {
         return false
     },
-}).Await() // => nil, *promise.AbortErr
+}).Await() // => nil, error
 ```

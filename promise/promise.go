@@ -1,8 +1,8 @@
 package promise
 
-type PromisifiableFn func () (interface{}, error)
-type PromiseThenFn func (interface{}) (interface{}, error)
-type PromiseCatchFn func (error) (interface{}, error)
+type PromisifiableFn func() (interface{}, error)
+type PromiseThenFn func(interface{}) (interface{}, error)
+type PromiseCatchFn func(error) (interface{}, error)
 
 type Promise struct {
 	doneC  chan struct{}

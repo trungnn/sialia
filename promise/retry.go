@@ -18,7 +18,7 @@ type RetryOpts struct {
 func NewWithRetry(fn PromisifiableFn, opts *RetryOpts) *Promise {
 	p := New(fn)
 
-	for tries := 0; tries < opts.MaxTries; tries++ {
+	for tries := 1; tries < opts.MaxTries; tries++ {
 		p = p.Catch(func(err error) (interface{}, error) {
 			if _, ok := err.(*AbortErr); ok {
 				return nil, err
@@ -32,5 +32,11 @@ func NewWithRetry(fn PromisifiableFn, opts *RetryOpts) *Promise {
 		})
 	}
 
-	return p
+	return p.Catch(func(err error) (interface{}, error) {
+		if aerr, ok := err.(*AbortErr); ok {
+			return nil, aerr.err
+		}
+
+		return nil, err
+	})
 }
