@@ -177,3 +177,26 @@ p := promise.Map(promise.PromiseMapOpts{
 // p will block until all promises are settled
 res, err := p.Await() // 
 ```
+
+Promise with Retries
+
+```golang
+i := 0
+res, err := promise.NewWithRetry(func() (interface{}, error) {
+    i++
+    return Add(i, 0)
+}, &promise.RetryOpts{
+    MaxTries: 10,
+}).Await() // => nil, *promise.AbortErr
+
+j := 0
+res, err := promise.NewWithRetry(func() (interface{}, error) {
+    j++
+    return Add(i, 0)
+}, &promise.RetryOpts{
+    MaxTries: 10,
+    RetryCheck: func(err error) bool {
+        return false
+    },
+}).Await() // => nil, *promise.AbortErr
+```
