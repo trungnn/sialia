@@ -1,0 +1,8 @@
+language: go
+
+go:
+  - "1.11"
+
+env:
+  matrix:
+    - MAKE_COMMAND=unittest
