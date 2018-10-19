@@ -23,7 +23,7 @@ func TestPromiseAwait(t *testing.T) {
 	assert.False(t, p.IsSettled, "promise should not be settled yet")
 
 	res, err := p.Await()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, res, 3)
 }
 
@@ -37,7 +37,7 @@ func TestPromiseThen(t *testing.T) {
 		})
 
 	res, err := pChain.Await()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, res, 4)
 
 	pChain = promise.
@@ -55,7 +55,7 @@ func TestPromiseThen(t *testing.T) {
 		})
 
 	res, err = pChain.Await()
-	assert.Errorf(t, err, NegativeAdderErr.Error())
+	assert.EqualError(t, err, NegativeAdderErr.Error())
 }
 
 func TestPromiseCatch(t *testing.T) {
@@ -71,7 +71,7 @@ func TestPromiseCatch(t *testing.T) {
 
 	res, err := pChain.Await()
 	assert.Nil(t, res)
-	assert.Errorf(t, err, "transformed error")
+	assert.EqualError(t, err, "transformed error")
 
 	pChain = promise.
 		New(func() (interface{}, error) {
@@ -89,6 +89,6 @@ func TestPromiseCatch(t *testing.T) {
 		})
 
 	res, err = pChain.Await()
-	assert.Nil(t, err, "should not reach catch's inner function")
+	assert.NoError(t, err, "should not reach catch's inner function")
 	assert.Equal(t, res, 4)
 }
