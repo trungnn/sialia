@@ -50,25 +50,26 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 			workC <- struct{}{}
 		}
 
-		if p.IsSettled {
-			return
-		}
-
-		switch val := v.(type) {
-		case *Promise:
-			pList := res.(PromiseList)
-			pList[i] = val
-		default:
-			rList := res.(ResList)
-			rList[i] = val
-		}
-
-		if remaining--; remaining == 0 {
-			if workC != nil {
-				close(workC)
+		if !p.IsSettled {
+			switch val := v.(type) {
+			case *Promise:
+				pList := res.(PromiseList)
+				pList[i] = val
+			default:
+				rList := res.(ResList)
+				rList[i] = val
 			}
 
-			p.settle(res, nil)
+			p.lock.Lock()
+			defer p.lock.Unlock()
+
+			if remaining--; remaining == 0 {
+				if workC != nil {
+					close(workC)
+				}
+
+				p.settle(res, nil)
+			}
 		}
 	}
 

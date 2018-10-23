@@ -1,5 +1,7 @@
 package promise
 
+import "sync"
+
 type PromisifiableFn func() (interface{}, error)
 type PromiseThenFn func(interface{}) (interface{}, error)
 type PromiseCatchFn func(error) (interface{}, error)
@@ -7,6 +9,7 @@ type PromiseCatchFn func(error) (interface{}, error)
 type Promise struct {
 	doneC  chan struct{}
 	startC chan struct{}
+	lock   sync.Mutex
 
 	AutoStart bool
 	IsSettled bool
@@ -36,16 +39,14 @@ func New(fn PromisifiableFn) *Promise {
 }
 
 func (p *Promise) settle(res interface{}, err error) {
-	if p.IsSettled {
-		return // redundant
+	if !p.IsSettled {
+		p.Res, p.Err = res, err
+		p.IsSettled = true
+		p.doneC <- struct{}{}
+
+		close(p.doneC)
+		close(p.startC)
 	}
-
-	p.Res, p.Err = res, err
-	p.IsSettled = true
-	p.doneC <- struct{}{}
-
-	close(p.doneC)
-	close(p.startC)
 }
 
 func (p *Promise) Then(fn PromiseThenFn) *Promise {
