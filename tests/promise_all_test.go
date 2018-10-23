@@ -56,12 +56,24 @@ func TestPromiseWaitAllSettled(t *testing.T) {
 		}))
 	}
 
-	_, err := promise.All(promise.PromiseAllOpts{
+	res, err := promise.All(promise.PromiseAllOpts{
 		Promises:       promises,
 		WaitAllSettled: true,
 	}).Await()
 
 	assert.Nil(t, err)
+	assert.Equal(t, len(promises), len(res.(promise.PromiseList)))
+
+	for i, p := range res.(promise.PromiseList) {
+		assert.True(t, p.IsSettled)
+
+		if i == 1 {
+			assert.EqualError(t, p.Err, "bob not found")
+		} else {
+			assert.Nil(t, p.Err)
+			assert.Equal(t, testScores[names[i]], p.Res)
+		}
+	}
 }
 
 func TestPromiseAllEmpty(t *testing.T) {
