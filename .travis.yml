@@ -1,9 +1,16 @@
 language: go
 
-env:
-  matrix:
-    - MAKE_COMMAND=test
-
 go:
   - "1.11"
 
+env:
+  global:
+    - CC_TEST_REPORTER_ID=e2763c2a8a00d7b56a1acaf1fc2aa74f8ceeb14893acd109ec73480335fe44f2
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
