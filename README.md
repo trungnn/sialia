@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.com/trungnn/sialia.svg?branch=master)](https://travis-ci.com/trungnn/sialia)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/d805cf15542aceeaed3e/test_coverage)](https://codeclimate.com/github/trungnn/sialia/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/d805cf15542aceeaed3e/maintainability)](https://codeclimate.com/github/trungnn/sialia/maintainability)
 
 Sialia
 ===
