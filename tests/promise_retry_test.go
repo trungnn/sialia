@@ -6,6 +6,7 @@ import (
 	"github.com/trungnn/sialia/promise"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
@@ -13,15 +14,22 @@ var maxTries = 5
 
 func newTestServer(readyC chan bool) *httptest.Server {
 	var serverReady bool
+	var rwMutex sync.RWMutex
+
 	go func() {
 		for {
 			select {
-			case serverReady = <-readyC:
+			case isReady := <-readyC:
+				rwMutex.Lock()
+				serverReady = isReady
+				rwMutex.Unlock()
 			}
 		}
 	}()
 
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rwMutex.RLock()
+		defer rwMutex.RUnlock()
 		if !serverReady {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
