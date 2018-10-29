@@ -43,9 +43,6 @@ func (p *Promise) settle(res interface{}, err error) {
 		p.Res, p.Err = res, err
 		p.IsSettled = true
 		p.doneC <- struct{}{}
-
-		close(p.doneC)
-		close(p.startC)
 	}
 }
 

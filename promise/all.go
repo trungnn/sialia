@@ -64,10 +64,6 @@ func (p *Promise) all(childPromises []*Promise, waitAllSettled bool, maxConcurre
 			defer p.lock.Unlock()
 
 			if remaining--; remaining == 0 {
-				if workC != nil {
-					close(workC)
-				}
-
 				p.settle(res, nil)
 			}
 		}
